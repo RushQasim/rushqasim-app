@@ -3,20 +3,401 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Investment Scooter App</title>
+  <title>Av Rush</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; background-color: #f7f7f7; }
-    .card { background: white; padding: 20px; margin: 20px auto; max-width: 400px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
-    .input, .button { width: 100%; padding: 10px; margin: 10px 0; border-radius: 6px; border: 1px solid #ccc; }
-    .button { background-color: #007bff; color: white; border: none; cursor: pointer; }
-    .button:disabled { background-color: #ccc; cursor: not-allowed; }
-    .tabs { display: flex; justify-content: space-around; margin-bottom: 10px; }
-    .tab-content { display: none; }
-    .tab-content.active { display: block; }
-    #rechargeStatus, #withdrawStatus { margin-top: 10px; font-style: italic; color: #555; }
+    .page {
+      display: none;
+      animation: fade 0.5s ease-in-out;
+    }
+    .active {
+      display: block;
+    }
+    @keyframes fade {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .copy-button {
+      background-color: #22c55e;
+      color: white;
+      padding: 0.25rem 0.75rem;
+      border-radius: 0.375rem;
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.3s ease;
+    }
+    .copy-button:hover {
+      background-color: #16a34a;
+    }
   </style>
+  <script>
+    let currentBalance = 2500; // Initial balance
+    const USDC_POLYGON_ADDRESS = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"; // Example USDC Polygon address
+
+    function showPage(pageId) {
+      document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+      document.getElementById(pageId).classList.add('active');
+    }
+
+    function updateProfileFromStorage() {
+      const name = localStorage.getItem('userName') || 'John Doe';
+      const email = localStorage.getItem('userEmail') || 'johndoe@example.com';
+      const since = localStorage.getItem('memberSince') || 'January 2025';
+      const vip = localStorage.getItem('vipLevel') || 'VIP Bronze';
+
+      document.getElementById('editName').value = name;
+      document.getElementById('editEmail').value = email;
+      document.getElementById('editSince').value = since;
+      document.getElementById('editVIP').value = vip;
+
+      document.getElementById('profileName').innerText = name;
+      document.getElementById('profileEmail').innerText = email;
+      document.getElementById('profileSince').innerText = since;
+      document.getElementById('profileVIP').innerText = vip;
+    }
+
+    function saveProfileEdits() {
+      const name = document.getElementById('editName').value;
+      const email = document.getElementById('editEmail').value;
+      const since = document.getElementById('editSince').value;
+      const vip = document.getElementById('editVIP').value;
+
+      localStorage.setItem('userName', name);
+      localStorage.setItem('userEmail', email);
+      localStorage.setItem('memberSince', since);
+      localStorage.setItem('vipLevel', vip);
+
+      updateProfileFromStorage();
+      showPage('home');
+    }
+
+    function goToRechargeWithAmount(amount) {
+      showPage('recharge');
+      const rechargeInput = document.getElementById('rechargeAmount');
+      rechargeInput.value = amount.toFixed(2);
+    }
+
+    function copyUsdcAddress() {
+      navigator.clipboard.writeText(USDC_POLYGON_ADDRESS).then(() => {
+        alert("USDC Polygon address copied to clipboard!");
+      });
+    }
+
+    function confirmRecharge() {
+      const amountInput = document.getElementById('rechargeAmount');
+      const amount = parseFloat(amountInput.value);
+      if (isNaN(amount) || amount <= 0) {
+        alert('Please enter a valid recharge amount.');
+        return;
+      }
+      // Here you'd normally verify the blockchain payment; we simulate it
+      currentBalance += amount;
+      updateBalanceDisplay();
+      alert(`Recharge confirmed! Your balance increased by $${amount.toFixed(2)}.`);
+      amountInput.value = '';
+      showPage('home');
+    }
+
+    function saveWithdrawAddress() {
+      const addressInput = document.getElementById('withdrawAddress');
+      localStorage.setItem('withdrawAddress', addressInput.value.trim());
+    }
+
+    function loadWithdrawAddress() {
+      const savedAddress = localStorage.getItem('withdrawAddress') || '';
+      document.getElementById('withdrawAddress').value = savedAddress;
+    }
+
+    function performWithdraw() {
+      const withdrawAmountInput = document.getElementById('withdrawAmount');
+      const addressInput = document.getElementById('withdrawAddress');
+      const amount = parseFloat(withdrawAmountInput.value);
+      const withdrawAddress = addressInput.value.trim();
+
+      if (!withdrawAddress) {
+        alert('Please enter your withdraw address.');
+        return;
+      }
+
+      if (isNaN(amount) || amount <= 0) {
+        alert('Please enter a valid withdraw amount.');
+        return;
+      }
+
+      if (amount > currentBalance) {
+        alert('Insufficient balance to withdraw this amount.');
+        return;
+      }
+
+      // Simulate withdrawal processing
+      currentBalance -= amount;
+      updateBalanceDisplay();
+
+      // Save withdraw address
+      saveWithdrawAddress();
+
+      alert(`Withdraw request of $${amount.toFixed(2)} sent to address: ${withdrawAddress}`);
+      withdrawAmountInput.value = '';
+      showPage('home');
+    }
+
+    function updateBalanceDisplay() {
+      const balanceEl = document.querySelector('#home p span.font-bold.text-green-400');
+      if (balanceEl) {
+        balanceEl.innerText = `$${currentBalance.toFixed(2)}`;
+      }
+    }
+
+    window.onload = () => {
+      showPage('home');
+      updateProfileFromStorage();
+      updateBalanceDisplay();
+      loadWithdrawAddress();
+    };
+  </script>
 </head>
-<body>
-  <!-- HTML content omitted here for brevity -->
+<body class="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white font-sans">
+  <nav class="flex justify-between items-center mb-6 p-4 bg-gray-800 rounded-xl shadow-lg">
+    <button onclick="showPage('home')" class="text-2xl font-extrabold tracking-tight text-green-400">💰 Av Rush</button>
+    <div class="space-x-3">
+      <button onclick="showPage('recharge')" class="hover:text-green-300">Recharge</button>
+      <button onclick="showPage('withdraw'); loadWithdrawAddress();" class="hover:text-blue-300">Withdraw</button>
+      <button onclick="showPage('vip')" class="hover:text-purple-300">VIP</button>
+      <button onclick="showPage('profile'); updateProfileFromStorage();" class="hover:text-yellow-300">Profile</button>
+    </div>
+  </nav>
+
+  <section id="home" class="page active p-4">
+    <h1 class="text-3xl font-bold mb-4">Welcome to Your Dashboard</h1>
+    <div class="bg-gray-800 p-4 rounded-xl shadow-inner mb-4">
+      <p class="text-lg">Balance: <span class="font-bold text-green-400">$2500</span></p>
+      <p class="text-md text-gray-400">Earnings Today: <span class="text-green-300">$10</span></p>
+    </div>
+
+    <h2 class="text-2xl font-semibold mb-3">💼 Investment Plans</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div class="p-4 bg-gray-800 rounded-xl shadow hover:scale-105 transition border border-green-500">
+        <h3 class="font-bold text-xl text-green-300">Starter Plan</h3>
+        <p class="text-sm text-gray-300">Invest: <span class="font-bold text-green-400">$50</span></p>
+        <p class="text-sm text-gray-400">Daily Earnings: <span class="font-semibold text-green-300">$2</span></p>
+        <button
+          class="mt-2 bg-green-600 px-4 py-1 rounded shadow hover:bg-green-500"
+          onclick="goToRechargeWithAmount(50)"
+        >
+          Activate
+        </button>
+      </div>
+      <div class="p-4 bg-gray-800 rounded-xl shadow hover:scale-105 transition border border-green-500">
+        <h3 class="font-bold text-xl text-green-400">Advanced Plan</h3>
+        <p class="text-sm text-gray-300">Invest: <span class="font-bold text-green-400">$200</span></p>
+        <p class="text-sm text-gray-400">Daily Earnings: <span class="font-semibold text-green-300">$10</span></p>
+        <button
+          class="mt-2 bg-green-600 px-4 py-1 rounded shadow hover:bg-green-500"
+          onclick="goToRechargeWithAmount(200)"
+        >
+          Activate
+        </button>
+      </div>
+      <div class="p-4 bg-gray-800 rounded-xl shadow hover:scale-105 transition border border-green-500">
+        <h3 class="font-bold text-xl text-green-500">Pro Plan</h3>
+        <p class="text-sm text-gray-300">Invest: <span class="font-bold text-green-400">$500</span></p>
+        <p class="text-sm text-gray-400">Daily Earnings: <span class="font-semibold text-green-300">$30</span></p>
+        <button
+          class="mt-2 bg-green-600 px-4 py-1 rounded shadow hover:bg-green-500"
+          onclick="goToRechargeWithAmount(500)"
+        >
+          Activate
+        </button>
+      </div>
+      <div class="p-4 bg-gray-800 rounded-xl shadow hover:scale-105 transition border border-green-500">
+        <h3 class="font-bold text-xl text-green-500">Mega Pro Plan</h3>
+        <p class="text-sm text-gray-300">Invest: <span class="font-bold text-green-400">$1000</span></p>
+        <p class="text-sm text-gray-400">Daily Earnings: <span class="font-semibold text-green-300">$30</span></p>
+        <button
+          class="mt-2 bg-green-600 px-4 py-1 rounded shadow hover:bg-green-500"
+          onclick="goToRechargeWithAmount(500)"
+        >
+          Activate
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <section id="recharge" class="page p-4">
+    <button onclick="showPage('home')" class="text-sm text-gray-400 mb-4">⬅️ Back</button>
+    <h1 class="text-3xl font-bold mb-4">Recharge Your Wallet</h1>
+
+    <label class="block mb-2 text-gray-300 font-semibold">USDC Polygon Address (Copy to send USDC):</label>
+    <div
+      class="flex items-center justify-between bg-gray-700 text-green-400 p-3 rounded mb-4 select-all cursor-pointer"
+      onclick="copyUsdcAddress()"
+      title="Click to copy address"
+    >
+      <span id="usdcAddress" class="break-all select-all">
+        0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48
+      </span>
+      <span class="copy-button">Copy</span>
+    </div>
+
+    <label class="block mb-2 text-gray-300 font-semibold">Recharge Amount (USD):</label>
+    <input
+      type="number"
+      id="rechargeAmount"
+      placeholder="Enter Amount"
+      class="w-full p-3 rounded text-black mb-4"
+      min="0"
+      step="0.01"
+    />
+    <button
+      onclick="confirmRecharge()"
+      class="bg-gradient-to-r from-green-500 to-green-700 w-full py-2 rounded-xl text-white font-semibold shadow hover:from-green-400 hover:to-green-600"
+    >
+      Confirm Recharge
+    </button>
+  </section>
+
+  <section id="withdraw" class="page p-4">
+    <button onclick="showPage('home')" class="text-sm text-gray-400 mb-4">⬅️ Back</button>
+    <h1 class="text-3xl font-bold mb-4">Withdraw Earnings</h1>
+
+    <label class="block mb-2 text-gray-300 font-semibold">Withdraw Address:</label>
+    <input
+      type="text"
+      id="withdrawAddress"
+      placeholder="Enter your Polygon address"
+      class="w-full p-3 rounded text-black mb-4"
+    />
+
+    <label class="block mb-2 text-gray-300 font-semibold">Amount to Withdraw (USD):</label>
+    <input
+      type="number"
+      id="withdrawAmount"
+      placeholder="Enter amount"
+      class="w-full p-3 rounded text-black mb-4"
+      min="0"
+      step="0.01"
+    />
+    <button
+      onclick="performWithdraw()"
+      class="bg-gradient-to-r from-blue-500 to-blue-700 w-full py-2 rounded-xl text-white font-semibold shadow hover:from-blue-400 hover:to-blue-600"
+    >
+      Withdraw Now
+    </button>
+  </section>
+
+  <section id="vip" class="page p-4">
+    <button onclick="showPage('home')" class="text-sm text-gray-400 mb-4">⬅️ Back</button>
+    <h1 class="text-3xl font-bold mb-4">VIP Levels</h1>
+    <div class="space-y-4">
+      <div class="p-4 bg-gray-800 rounded-xl shadow border border-purple-400">
+        <h2 class="font-bold text-xl text-purple-400">VIP Bronze</h2>
+        <p>Upgrade: <span class="text-yellow-300 font-semibold">$100</span> | Daily: 5%</p>
+        <button
+          class="mt-2 bg-purple-600 px-4 py-2 rounded shadow hover:bg-purple-500"
+          onclick="goToRechargeWithAmount(100)"
+        >
+          Upgrade
+        </button>
+      </div>
+      <div class="p-4 bg-gray-800 rounded-xl shadow border border-purple-400">
+        <h2 class="font-bold text-xl text-purple-400">VIP Silver</h2>
+        <p>Upgrade: <span class="text-yellow-300 font-semibold">$500</span> | Daily: 8%</p>
+        <button
+          class="mt-2 bg-purple-600 px-4 py-2 rounded shadow hover:bg-purple-500"
+          onclick="goToRechargeWithAmount(500)"
+        >
+          Upgrade
+        </button>
+      </div>
+      <div class="p-4 bg-gray-800 rounded-xl shadow border border-purple-400">
+        <h2 class="font-bold text-xl text-purple-400">VIP Gold</h2>
+        <p>Upgrade: <span class="text-yellow-300 font-semibold">$1000</span> | Daily: 12%</p>
+        <button
+          class="mt-2 bg-purple-600 px-4 py-2 rounded shadow hover:bg-purple-500"
+          onclick="goToRechargeWithAmount(1000)"
+        >
+          Upgrade
+        </button>
+      </div>
+      <div class="p-4 bg-gray-800 rounded-xl shadow border border-purple-400">
+        <h2 class="font-bold text-xl text-purple-400">VIP Platinum</h2>
+        <p>Upgrade: <span class="text-yellow-300 font-semibold">$5000</span> | Daily: 15%</p>
+        <button
+          class="mt-2 bg-purple-600 px-4 py-2 rounded shadow hover:bg-purple-500"
+          onclick="goToRechargeWithAmount(5000)"
+        >
+          Upgrade
+        </button>
+      </div>
+      <div class="p-4 bg-gray-800 rounded-xl shadow border-2 border-yellow-400">
+        <h2 class="font-bold text-xl text-yellow-400">VIP Diamond</h2>
+        <p>Upgrade: <span class="text-yellow-300 font-semibold">$10000</span> | Daily: 20%</p>
+        <button
+          class="mt-2 bg-yellow-500 px-4 py-2 rounded shadow hover:bg-yellow-400"
+          onclick="goToRechargeWithAmount(10000)"
+        >
+          Upgrade
+        </button>
+      </div>
+      <div class="p-4 bg-gray-800 rounded-xl shadow border-2 border-yellow-400">
+        <h2 class="font-bold text-xl text-yellow-400">VIP Legendary</h2>
+        <p>Upgrade: <span class="text-yellow-300 font-semibold">$25000</span> | Daily: 30%</p>
+        <button
+          class="mt-2 bg-yellow-500 px-4 py-2 rounded shadow hover:bg-yellow-400"
+          onclick="goToRechargeWithAmount(25000)"
+        >
+          Upgrade
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <section id="profile" class="page p-4">
+    <button onclick="showPage('home')" class="text-sm text-gray-400 mb-4">⬅️ Back</button>
+    <h1 class="text-3xl font-bold mb-4">Your Profile</h1>
+    <div class="bg-gray-800 p-4 rounded-xl shadow mb-4">
+      <label class="block text-gray-300">Name:</label>
+      <input
+        id="editName"
+        type="text"
+        class="w-full p-2 rounded text-black mb-2"
+        placeholder="Enter your name"
+      />
+      <label class="block text-gray-300">Email:</label>
+      <input
+        id="editEmail"
+        type="email"
+        class="w-full p-2 rounded text-black mb-2"
+        placeholder="Enter your email"
+      />
+      <label class="block text-gray-300">Phone Number:</label>
+      <input
+        id="editPhone"
+        type="text"
+        class="w-full p-2 rounded text-black mb-2"
+        placeholder="Phone Number"
+      />
+      <label class="block text-gray-300">VIP Level:</label>
+      <input
+        id="editVIP"
+        type="text"
+        class="w-full p-2 rounded text-black mb-4"
+        placeholder="Enter VIP Level"
+      />
+      <button
+        onclick="saveProfileEdits()"
+        class="bg-yellow-500 text-black px-6 py-2 rounded font-semibold hover:bg-yellow-400"
+      >
+        Save Profile
+      </button>
+    </div>
+    <div class="bg-gray-700 p-4 rounded-xl shadow">
+      <h2 class="text-xl font-semibold mb-2">Current Profile</h2>
+      <p><strong>Name:</strong> <span id="profileName"></span></p>
+      <p><strong>Email:</strong> <span id="profileEmail"></span></p>
+      <p><strong>Phone Number:</strong> <span id="profileSince"></span></p>
+      <p><strong>VIP Level:</strong> <span id="profileVIP"></span></p>
+    </div>
+  </section>
 </body>
 </html>
